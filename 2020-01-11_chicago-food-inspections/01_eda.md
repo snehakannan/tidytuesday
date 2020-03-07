@@ -9,30 +9,7 @@ output:
   #rmarkdown::github_document
 ---
 
-```{r setup, include=FALSE, warning=FALSE, message=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 
-library(tidyverse)
-library(lubridate)
-library(janitor)
-library(scales)
-library(patchwork)
-library(knitr)
-library(kableExtra)
-
-#food_inspections_raw_df <- read.csv('Food_Inspections.csv', stringsAsFactors = #FALSE)
-
-food_inspections_raw_df <- readRDS('food_inspections_raw_df.rds')
-
-food_inspections_filtered_df <- food_inspections_raw_df %>% 
-  clean_names() %>% 
-  filter(mdy(inspection_date) >= '2012-01-01', 
-         mdy(inspection_date) < '2018-01-01') 
-
-chicago_neighborhoods_raw_df <- readxl::read_xlsx("chicago_neighborhoods.xlsx") %>% 
-  janitor::clean_names()
-
-```
 
 To get better at extracting meaningful insights from data, I was poking around for project ideas to improve my data wrangling and visualization skills in R. [TidyTuesday](https://github.com/rfordatascience/tidytuesday) had an interesting dataset about [NYC Restaurant Inspections](https://github.com/rfordatascience/tidytuesday/tree/master/data/2018/2018-12-11). Being a Chicago resident, I wanted to find out if the [City of Chicago](https://data.cityofchicago.org/) had a similar dataset. [Food Inspections](https://data.cityofchicago.org/Health-Human-Services/Food-Inspections/4ijn-s7e5) provided just what I was looking for. 
 
@@ -45,8 +22,8 @@ Having made note of the disclaimer on the website that the dataset could include
 
 Unlike the NYC dataset in TidyTuesday, this contains food inspections across various **Facilities**. Restaurants constitute majority of the inspections in the data with about 69% from this category, roughly about 86,000 in 6 years. Grocery Stores are a distant second with about 13%. Other categories include Schools, Bakeries, Daycares etc. In this analysis, I will be looking at just the inspections in **Restaurants**. 
 
-```{r fig.width=14,fig.height=6.5, message=FALSE}
 
+```r
 food_inspections_filtered_df %>% 
   mutate(total_num_inspections = n()) %>% 
   group_by(facility_type) %>% 
@@ -67,26 +44,26 @@ food_inspections_filtered_df %>%
   scale_y_continuous(breaks = seq(0, 100000, by=10000), labels = comma)+
   coord_flip()+
   theme_bw(base_size = 18)
-
 ```
+
+![](01_eda_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
 
 
 #### Restaurants, Inspections and Outcomes {.tabset .tabset-fade .tabset-pills}
 
-```{r}
 
+```r
 food_inspections_restaurants_df <- food_inspections_filtered_df %>% 
   filter(facility_type == 'Restaurant') %>% 
   mutate(inspection_date = mdy(inspection_date))
-
 ```
 
 ##### Outcomes
 
 There are 7 different events that can happen after the inspection. Three major ones which are going to be focused on are **Pass, Pass with Conditions and Fail** as these constitute roughly about 87% of the total share.
 
-```{r fig.width=14,fig.height=6.5, message=FALSE}
 
+```r
 food_inspections_restaurants_df %>% 
   mutate(total_num_inspections = n()) %>% 
   group_by(results) %>% 
@@ -106,12 +83,14 @@ food_inspections_restaurants_df %>%
   theme_bw(base_size = 18)
 ```
 
+![](01_eda_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
 ##### Inspection Types
 
 **Canvas** is the routine type of inspection that is performed most commonly as we can see from the data. 56% of all inspections are of type **Canvas**, followed by 12% of **Canvass Re-Inspection**. The city makes sure that the food establishments are safe for the citizens, so conducts unannounced inspections periodically. 10% of the  inspections are of type **License** which is done on a restaurant before granting the permission to operate. Two other reasons for inspections are **Complaint** and **Complaint Re-Inspection**, as a response to a complaint made on the restaurant. 
 
-```{r fig.width=14,fig.height=6.5, message=FALSE}
 
+```r
 food_inspections_restaurants_df %>% 
   mutate(total_num_inspections = n()) %>% 
   group_by(inspection_type) %>% 
@@ -133,14 +112,16 @@ food_inspections_restaurants_df %>%
   theme_bw(base_size = 18)
 ```
 
+![](01_eda_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
 ##### Risk Levels
 
 As expected, there are more inspections which occur in restaurants which have the **highest Risk** compared to those that have **medium Risk** and **low Risk**.
 
 I used the [wrap_plots](https://www.rdocumentation.org/packages/patchwork/versions/1.0.0/topics/wrap_plots) function from the package [patchwork](https://cran.r-project.org/web/packages/patchwork/index.html) to combine these two plots together. It's a cool package that I will definitely explore a lot more in the future!
 
-```{r  fig.width=14,fig.height=6.5, message=FALSE}
 
+```r
 p1 <- food_inspections_restaurants_df %>% 
   mutate(total_num_inspections = n()) %>% 
   group_by(risk) %>% 
@@ -176,8 +157,9 @@ p2 <- food_inspections_restaurants_df %>%
   theme(legend.position = "bottom", legend.direction = "horizontal")
 
 wrap_plots(p1, p2)
-  
 ```
+
+![](01_eda_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 
 ##### Inspection Types & Risk Levels
@@ -186,8 +168,8 @@ I filtered the Top 5 Inspection Types to see how the Inspection Types are spread
 
 High Risk Restaurants get the most number of routine inspections. They also get the most number of inspections because of complaints . 
 
-```{r fig.width=14,fig.height=6.5, message=FALSE}
 
+```r
 top_5_inspection_types_df <- food_inspections_restaurants_df %>% 
     filter(results %in% c('Pass', 'Pass w/ Conditions', 'Fail'),
          !risk %in% c('', 'All')) %>% 
@@ -223,13 +205,14 @@ food_inspections_restaurants_df %>%
   theme_bw(base_size = 18)
 ```
 
+![](01_eda_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
 ##### Outcomes over Time
 
 We can see that Resuaurants that **Pass** the inspections has decreased slightly year over year. Correspondingly, there is a slight increase in those with the outcome **Pass with Conditions** and **Fail**.
 
-```{r warning=FALSE}
 
-
+```r
 food_inspections_restaurants_df %>% 
   filter(results %in% c('Pass', 'Pass w/ Conditions', 'Fail')) %>% 
   mutate(inspection_month = floor_date(inspection_date, unit = "month")) %>% 
@@ -250,14 +233,16 @@ food_inspections_restaurants_df %>%
        y = "",
        color = "Result")+
   theme_bw()
-
 ```
+
+![](01_eda_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 ##### Outcomes by Months
 
 In more recent years ('15, '16 and '17), there is a slight downward trend in the number of inspections that result in **Pass** and a slight uptick in **Fail**. For example, looking at the trend for each year during January, February and March, we can see the decrease in the percentage of inspections where the Restaurant passed the test. Correspondingly, there is a slight increase in **Fail** and **Pass with Conditions** for these months.
 
-```{r fig.width=14,fig.height=8.5, message=FALSE}
+
+```r
 food_inspections_restaurants_df %>% 
   filter(results %in% c('Pass', 'Pass w/ Conditions', 'Fail')) %>% 
   mutate(inspection_month = floor_date(inspection_date, unit = "month"),
@@ -279,8 +264,9 @@ food_inspections_restaurants_df %>%
        y = "Percentage of Inspections",
        color = "Result")+
   theme_bw(base_size = 18)
-
 ```
+
+![](01_eda_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 #### Inspections in Chicago Land Area
 
@@ -288,10 +274,53 @@ To explore more about inspections in the Chicagoland area, I got the dataset map
 
 Here's the top 6 rows from the dataset. All the zipcodes belonging to a particular neighborhood are in one row.
 
-```{r}
+
+```r
 kable(head(chicago_neighborhoods_raw_df)) %>% 
   kable_styling(full_width = F)
 ```
+
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;"> neighborhood </th>
+   <th style="text-align:left;"> zip </th>
+   <th style="text-align:left;"> region </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Cathedral District </td>
+   <td style="text-align:left;"> 60611 </td>
+   <td style="text-align:left;"> Downtown </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Central Station </td>
+   <td style="text-align:left;"> 60605 </td>
+   <td style="text-align:left;"> Downtown </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Dearborn Park </td>
+   <td style="text-align:left;"> 60605 </td>
+   <td style="text-align:left;"> Downtown </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Gold Coast </td>
+   <td style="text-align:left;"> 60610, 60611 </td>
+   <td style="text-align:left;"> Downtown </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Loop </td>
+   <td style="text-align:left;"> 60601, 60602, 60603, 60604, 60605, 60606, 60607, 60616 </td>
+   <td style="text-align:left;"> Downtown </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Magnificent Mile </td>
+   <td style="text-align:left;"> 60611 </td>
+   <td style="text-align:left;"> Downtown </td>
+  </tr>
+</tbody>
+</table>
 
 
 [separate_rows](https://tidyr.tidyverse.org/reference/separate_rows.html) is an excellent function to the rescue here! I was able to separate them out the way I wanted and could group_by region.
@@ -299,8 +328,8 @@ kable(head(chicago_neighborhoods_raw_df)) %>%
 **Downtown** has the highest number of percentage of inspections which indicates that there are a large number of restaurants. **North Side** comes as a close second. 
 
 
-```{r}
 
+```r
 chicago_neighborhoods_df <- chicago_neighborhoods_raw_df %>% 
   separate_rows(zip)
 
@@ -334,15 +363,16 @@ food_inspections_restaurants_df %>%
        y = "Percentage of Inspections",
        color = "Region")+
   theme_bw()
-
 ```
+
+![](01_eda_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 #### Where CAN you eat?
 
 Downtown has the highest number of inspections among all the three Risk Levels - High, Medium and Low. 33% of <span style="color:red">High Risk</span> Restaurant inspections, 30% of <span style="color:orange">Medium Risk</span> inspections and a whopping 43% of <span style="color:green">Low Risk </span> inspections happen in Downtown. It's where a lot of the people work, they get their everyday lunches or have business lunches all around the region. North Side has 28%, 26% and 24% of restaurant inspections for High, Medium and Low Risk respectively. 
 
-```{r}
 
+```r
 chicago_neighborhoods_df <- chicago_neighborhoods_raw_df %>% 
   separate_rows(zip)
 
@@ -377,17 +407,16 @@ food_inspections_restaurants_df %>%
        y = "Share",
        color = "Region")+
   theme_bw()
-
-
-
 ```
+
+![](01_eda_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 #### How is your Neighborhood?
 
 I filtered the top 10 Neighborhoods (by total number of inspections) to explore more about them. Over the past few years, number of inspections in **South Loop** have been increasing! Something to fear?
 
-```{r warning=FALSE, message=FALSE}
 
+```r
 chicago_neighborhoods_df <- chicago_neighborhoods_raw_df %>% 
   separate_rows(zip)
 
@@ -435,14 +464,15 @@ food_inspections_restaurants_df %>%
        y = "Share",
        color = "Neighborhood")+
   theme_bw()
-
 ```
+
+![](01_eda_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 
 I looked at the Inspection Failure Rate in the Top 5 Neighborhoods. There is a definite increase in Fail Rate in **South Loop**. **Near West Side** saw a steep increase in 2014; more recently, it's showing a decreasing trend. 
 
-```{r warning=FALSE, message=FALSE}
 
+```r
 top_n_neighborhoods <- food_inspections_restaurants_df %>% 
   mutate(zip = as.character(zip)) %>% 
   left_join(chicago_neighborhoods_df, by = "zip") %>% 
@@ -487,8 +517,9 @@ food_inspections_restaurants_df %>%
        y = "Percentage",
        color = "Neighborhood")+
   theme_bw()
-
 ```
+
+![](01_eda_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 #### Conclusion
 
