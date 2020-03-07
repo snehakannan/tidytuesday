@@ -1,10 +1,10 @@
 ---
 title: "Chicago City Food Inspections"
 author: "Sneha Kannan"
-output: 
-  html_document: 
-    code_folding: hide
-    theme: united
+output: rmarkdown::github_document
+  #html_document: 
+  #code_folding: hide
+  #theme: united
 ---
 
 ```{r setup, include=FALSE, warning=FALSE, message=FALSE}
